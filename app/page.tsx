@@ -147,7 +147,7 @@ export default function Home() {
           </div>
 
           {/* Services List */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
+          <div className="bg-white rounded-lg border border-gray-200">
             {services.map((service) => (
               <ServiceStatus
                 key={service.id}

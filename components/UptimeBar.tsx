@@ -107,7 +107,7 @@ export function UptimeBar({ serviceId, serviceName, days = 90 }: UptimeBarProps)
   };
 
   return (
-    <div className="relative">
+    <div className="relative z-10">
       <div className="flex items-center gap-2 h-8">
         {uptimeData.map((day, index) => (
           <div
@@ -128,9 +128,9 @@ export function UptimeBar({ serviceId, serviceName, days = 90 }: UptimeBarProps)
       {/* Tooltip */}
       {hoveredDay && hoveredIndex !== null && (
         <div 
-          className="absolute z-10 bg-white border border-gray-200 rounded-lg shadow-lg p-4 mt-2 min-w-[280px]"
+          className="absolute z-50 bg-white border border-gray-200 rounded-lg shadow-xl p-4 mt-2 min-w-[280px]"
           style={{
-            left: `${(hoveredIndex / uptimeData.length) * 100}%`,
+            left: `${Math.min(Math.max((hoveredIndex / uptimeData.length) * 100, 20), 80)}%`,
             transform: 'translateX(-50%)',
           }}
         >
