@@ -1,9 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { ServiceCard } from '@/components/ServiceCard';
-import { IncidentTimeline } from '@/components/IncidentTimeline';
-import { OverallStatus } from '@/components/OverallStatus';
+import { ServiceStatus } from '@/components/ServiceStatus';
+import { IncidentCard } from '@/components/IncidentCard';
 
 interface Service {
   id: number;
@@ -34,7 +33,7 @@ export default function Home() {
       const [statusRes, incidentsRes, uptimeRes] = await Promise.all([
         fetch('/api/status', { cache: 'no-store' }),
         fetch('/api/incidents?days=30', { cache: 'no-store' }),
-        fetch('/api/uptime?days=30', { cache: 'no-store' }),
+        fetch('/api/uptime?days=90', { cache: 'no-store' }),
       ]);
 
       if (!statusRes.ok || !incidentsRes.ok || !uptimeRes.ok) {
@@ -69,8 +68,20 @@ export default function Home() {
 
   const getUptimeForService = (serviceId: number) => {
     const uptime = uptimeData.find(u => u.id === serviceId);
-    return uptime?.uptime;
+    return uptime?.uptime || '0.00';
   };
+
+  const getOverallStatus = () => {
+    if (services.some(s => s.status === 'down')) {
+      return { text: 'Major Outage', color: 'bg-red-50 border-red-200 text-red-900' };
+    }
+    if (services.some(s => s.status === 'degraded')) {
+      return { text: 'Degraded Performance', color: 'bg-yellow-50 border-yellow-200 text-yellow-900' };
+    }
+    return { text: 'All Systems Operational', color: 'bg-green-50 border-green-200 text-green-900' };
+  };
+
+  const overall = getOverallStatus();
 
   if (loading) {
     return (
@@ -86,35 +97,23 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-3">
               <img 
                 src="/deltaproto-logo.svg" 
                 alt="DeltaProto" 
-                className="h-12 w-12"
+                className="h-10 w-10"
               />
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">DeltaProto Status</h1>
-                <p className="text-gray-500 mt-1">Real-time service monitoring</p>
-              </div>
+              <h1 className="text-xl font-semibold text-gray-900">DeltaProto Status</h1>
             </div>
-            <button
-              onClick={fetchData}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              Refresh
-            </button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-6xl mx-auto px-6 py-8">
         {error && (
           <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4">
             <div className="flex items-center gap-2 text-red-800">
@@ -129,51 +128,86 @@ export default function Home() {
           </div>
         )}
 
-        {/* Overall Status */}
-        {services.length > 0 && (
-          <div className="mb-8">
-            <OverallStatus services={services} />
+        {/* Current Status Banner */}
+        {!error && services.length > 0 && (
+          <div className={`mb-8 rounded-lg border p-6 ${overall.color}`}>
+            <h2 className="text-2xl font-bold">{overall.text}</h2>
           </div>
         )}
 
-        {/* Last Updated */}
-        <div className="mb-6 text-sm text-gray-500 text-right">
-          Last updated: {lastUpdate.toLocaleString()}
-        </div>
+        {/* Uptime Section */}
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <p className="text-sm text-gray-500">
+              Uptime over the past 90 days.
+            </p>
+            <p className="text-xs text-gray-400">
+              Last updated: {lastUpdate.toLocaleString()}
+            </p>
+          </div>
 
-        {/* Services Grid */}
-        <div className="mb-12">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Services</h2>
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-2">
+          {/* Services List */}
+          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
             {services.map((service) => (
-              <ServiceCard
+              <ServiceStatus
                 key={service.id}
+                id={service.id}
                 name={service.name}
-                type={service.type}
                 status={service.status}
-                responseTime={service.responseTime}
-                lastChecked={service.lastChecked}
                 uptime={getUptimeForService(service.id)}
               />
             ))}
           </div>
+
+          {/* Legend */}
+          <div className="mt-4 flex items-center gap-6 text-xs text-gray-500">
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-green-500 rounded-sm" />
+              <span>Operational</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-yellow-500 rounded-sm" />
+              <span>Degraded Performance</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-red-500 rounded-sm" />
+              <span>Major Outage</span>
+            </div>
+            <div className="flex items-center gap-2">
+              <div className="w-3 h-3 bg-gray-300 rounded-sm" />
+              <span>No Data</span>
+            </div>
+          </div>
         </div>
 
-        {/* Incidents */}
+        {/* Past Incidents */}
         <div>
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">Recent Incidents</h2>
-          <IncidentTimeline incidents={incidents} />
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Past Incidents</h2>
+          
+          {incidents.length === 0 ? (
+            <div className="bg-white rounded-lg border border-gray-200 p-8 text-center">
+              <div className="text-green-600 mb-2">
+                <svg className="w-12 h-12 mx-auto" fill="currentColor" viewBox="0 0 20 20">
+                  <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                </svg>
+              </div>
+              <p className="text-gray-600 font-medium">No incidents reported.</p>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {incidents.map((incident) => (
+                <IncidentCard key={incident.id} incident={incident} />
+              ))}
+            </div>
+          )}
         </div>
       </main>
 
       {/* Footer */}
       <footer className="bg-white border-t border-gray-200 mt-12">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-6xl mx-auto px-6 py-6">
           <div className="text-center text-gray-500 text-sm">
             <p>© {new Date().getFullYear()} DeltaProto. All rights reserved.</p>
-            <p className="mt-2">
-              Powered by Next.js and Neon PostgreSQL
-            </p>
           </div>
         </div>
       </footer>
