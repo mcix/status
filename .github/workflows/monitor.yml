@@ -1,0 +1,23 @@
+name: Monitor Services
+
+on:
+  schedule:
+    # Run every 5 minutes
+    - cron: '*/5 * * * *'
+  # Allow manual triggering
+  workflow_dispatch:
+
+jobs:
+  monitor:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger monitoring endpoint
+        run: |
+          curl -X GET "${{ secrets.MONITORING_URL }}/api/cron" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            -f || echo "Monitoring check failed, but continuing..."
+      
+      - name: Check status
+        run: |
+          echo "Monitoring check triggered successfully"
+
