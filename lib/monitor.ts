@@ -162,7 +162,7 @@ export async function getRecentIncidents(days: number = 30) {
         ) as updates
       FROM incidents i
       JOIN services s ON i.service_id = s.id
-      WHERE i.started_at > NOW() - INTERVAL '${days} days'
+      WHERE i.started_at > NOW() - INTERVAL '1 day' * ${days}
       ORDER BY i.started_at DESC
     `;
     
@@ -182,7 +182,7 @@ export async function getUptimeStats(serviceId: number, days: number = 30) {
         AVG(response_time) FILTER (WHERE status = 'operational') as avg_response_time
       FROM status_checks
       WHERE service_id = ${serviceId}
-      AND checked_at > NOW() - INTERVAL '${days} days'
+      AND checked_at > NOW() - INTERVAL '1 day' * ${days}
     `;
     
     if (stats.length > 0 && stats[0].total_checks > 0) {
