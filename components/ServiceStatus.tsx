@@ -52,7 +52,8 @@ export function ServiceStatus({ id, name, status, uptime }: ServiceStatusProps) 
 
         {/* Uptime stats */}
         <div className="flex items-center justify-between mt-3 text-sm text-gray-500">
-          <span>90 days ago</span>
+          <span className="sm:hidden">30 days ago</span>
+          <span className="hidden sm:inline">90 days ago</span>
           <span className="font-medium">{uptime} % uptime</span>
           <span>Today</span>
         </div>

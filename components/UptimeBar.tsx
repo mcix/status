@@ -108,11 +108,30 @@ export function UptimeBar({ serviceId, serviceName, days = 90 }: UptimeBarProps)
 
   return (
     <div className="relative z-10">
-      <div className="flex items-center gap-2 h-8">
-        {uptimeData.map((day, index) => (
+      {/* Desktop: Show all 90 days, Mobile: Show recent 30 days only */}
+      <div className="flex items-center gap-0 sm:gap-0.5 h-8 overflow-hidden">
+        {/* Desktop only: Show older 60 days */}
+        <div className="hidden sm:contents">
+          {uptimeData.slice(0, -30).map((day, index) => (
+            <div
+              key={`early-${index}`}
+              className={`flex-1 h-full min-w-[3px] ${getStatusColor(day.status)} cursor-pointer transition-opacity hover:opacity-80 rounded-sm`}
+              onMouseEnter={() => {
+                setHoveredDay(day);
+                setHoveredIndex(index);
+              }}
+              onMouseLeave={() => {
+                setHoveredDay(null);
+                setHoveredIndex(null);
+              }}
+            />
+          ))}
+        </div>
+        {/* Always show: Recent 30 days */}
+        {uptimeData.slice(-30).map((day, index) => (
           <div
             key={index}
-            className={`flex-1 h-full ${getStatusColor(day.status)} cursor-pointer transition-opacity hover:opacity-80 rounded-sm`}
+            className={`flex-1 h-full min-w-[2px] sm:min-w-[3px] ${getStatusColor(day.status)} cursor-pointer transition-opacity hover:opacity-80 rounded-[1px] sm:rounded-sm`}
             onMouseEnter={() => {
               setHoveredDay(day);
               setHoveredIndex(index);
